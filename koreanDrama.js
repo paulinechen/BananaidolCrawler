@@ -14,7 +14,7 @@ var urlArray = Array();
 var titleArray = Array();
 var linkArray = Array();
 var j = 0;
-var k =0; // the index for the titleArray;
+var k = 0; // the index for the titleArray;
 var linkCount = 0;
 
 var drama_href = Array();
@@ -60,7 +60,10 @@ app.get('/scrape', function(req, res){
      	"callback": function(error, result, $){
 			var i = 0;
 			var counter = 0;  
+			var title = $("title").text(); 
+		//if(title.indexOf("貴夫人")==-1){
 			$("h4").children().children().children().filter(function(){	
+
 
 				if(counter<3){ 				
 				var data2 = $(this);	
@@ -73,7 +76,26 @@ app.get('/scrape', function(req, res){
 				i++;
 				counter++;
 			}
+
 			}) 
+		//}
+		/*
+		else{
+
+			$("h4").children().children().children().filter(function(){	
+				var data2 = $(this);	
+				urlArray[i] = data2.attr("href"); 
+				titleArray[i] = data2.text(); 
+
+				if(titleArray[i].indexOf("土豆")==-1){
+					crawler2.queue(urlArray[i]);	
+				}
+				i++;
+			}) 
+
+		}
+		*/
+
 		}
 	});
 
@@ -95,8 +117,8 @@ app.get('/scrape', function(req, res){
     		var href = data.attr("href"); 
     		type = "dailymotion";
 
-            	if(href.indexOf("dailymotion")!=-1){
-    			links += href.replace("http://www.dailymotion.com/video/","") + ",";
+            	if(href.indexOf("dailymotion")!=-1){       
+    			links = links + href.replace("http://www.dailymotion.com/video/","") + ",";
     	   		}	
 			}) 
 			 
@@ -110,14 +132,26 @@ app.get('/scrape', function(req, res){
 						var keyid = info[a].i;
 					}
 				}
-	            console.log(keyid + "|" + arrTitleMatches[0].replace(" 第","") + "|" + parseInt(arrMatches[0].replace("第","").replace("集","")) + "|"+ type + "|" + links);
+	           
+	           if(typeof keyid ==='number'&& typeof links==='string'){
 
-	           if(typeof keyid ==='number'){
-				csvStream.write({keyid: keyid, name: arrTitleMatches[0].replace(" 第",""),episode: parseInt(arrMatches[0].replace("第","").replace("集","")),type: type,linkid: links});
+	           	if(arrTitleMatches[0].replace(" 第","").indexOf("Trot戀人")==-1){
+
+	           	console.log(keyid + "|" + arrTitleMatches[0].replace(" 第","") + "|" + parseInt(arrMatches[0].replace("第","").replace("集","")) + "|"+ type + "|" + links.substring(0,links.length-1));
+	           	
+	           	var url_api = 'http://54.221.241.105:5000/UPDATE/DRAMASINFO?id='+keyid+'&link='+links.substring(0,links.length-1)+'&type=dailymotion&num='+parseInt(arrMatches[0].replace("第","").replace("集",""));
+	           
+				csvStream.write({keyid: keyid, name: arrTitleMatches[0].replace(" 第",""),episode: parseInt(arrMatches[0].replace("第","").replace("集","")),type: type,linkid: links.substring(0,links.length-1)});
 				linkCount = linkCount + 1;
-			}
 
-				if (linkCount==50) {
+					request(url_api, function(){
+	           		console.log("api requested! the keyid is "+keyid);
+	           		})
+
+				}
+				}
+
+				if (linkCount==20) {
 	            	csvStream.write(null);
 				}
 
@@ -137,7 +171,7 @@ app.get('/scrape', function(req, res){
 		"callback": function(error, result, $){
 
 			$(".widget_tag_cloud > a").filter(function(){
-				if(count<43){ // number of drama
+				if(count<42){ // number of dramas
 				var data3 = $(this);
  				drama_href[j] = data3.attr("href");
  				drama_name[j] = data3.attr("title");
@@ -172,8 +206,3 @@ function httpResponse(response, data) {
         }
 
 }
-
-
-
-
-
